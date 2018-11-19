@@ -3,7 +3,7 @@ import pandas as pd
 import pickle 
 import matplotlib.pyplot as plt 
 import numpy as np
-#%matplotlib qt
+%matplotlib qt
 
 with open("./clean_train.pkl", 'rb') as f:
     train_df = pickle.load(f)
@@ -49,3 +49,14 @@ print(train_df[np.logical_or(train_df["load"] > upper, train_df["load"] < lower)
 
 clean_train_df = train_df[train_df["temperature"].notna()]
 clean_train_df.to_pickle("./clean_train.pkl")
+
+# Check for correlation between the two variables
+
+from pandas.tools.plotting import scatter_matrix
+scatter_matrix(clean_train_df)
+corr_matrix = clean_train_df.corr()
+print(corr_matrix)
+
+# Load and temperature are very strongly negatively correlated. 
+# The correlation coefficient is very high (-0.938645), which suggests that linear models
+# could work for this case
