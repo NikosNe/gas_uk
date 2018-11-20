@@ -13,7 +13,7 @@ with open("./clean_train.pkl", 'rb') as f:
     clean_train_df = pickle.load(f)
 
 # Standardize the data, so that they have the same scale
- 
+######Don't use standardization for the training and fitting
 scaler = StandardScaler()
 scaler.fit(clean_train_df)
 standardized_clean_train_df = scaler.transform(clean_train_df)
@@ -24,19 +24,31 @@ standardized_clean_train_df = pd.DataFrame(standardized_clean_train_df,
 standardized_clean_train_df['day_of_week'] = standardized_clean_train_df.index.dayofweek.astype('category', copy = False)
 
 lin_reg = LinearRegression()
-scores_lin = cross_val_score(lin_reg, clean_train_df[["temperature","day_of_week"]],
-                             clean_train_df[["load"]], 
+scores_lin = cross_val_score(lin_reg, standardized_clean_train_df[["temperature","day_of_week"]],
+                             standardized_clean_train_df[["load"]], 
                              scoring = "r2", cv = 10)
 print(np.mean(scores_lin))
 
 tree_reg = DecisionTreeRegressor()
-scores_tree = cross_val_score(tree_reg, clean_train_df[["temperature", "day_of_week"]],
-                              clean_train_df[["load"]], 
+scores_tree = cross_val_score(tree_reg, standardized_clean_train_df[["temperature", "day_of_week"]],
+                              standardized_clean_train_df[["load"]], 
                               scoring = "r2", cv = 10)
 print(np.mean(scores_tree))
 
 forest_reg = RandomForestRegressor()
-scores_forest = cross_val_score(forest_reg, clean_train_df[["temperature", "day_of_week"]],
-                                clean_train_df[["load"]], 
+scores_forest = cross_val_score(forest_reg, standardized_clean_train_df[["temperature", "day_of_week"]],
+                                standardized_clean_train_df[["load"]], 
                                 scoring = "r2", cv = 10)
 print(np.mean(scores_forest))
+
+with open("./test.pkl", 'rb') as f:
+    test_df = pickle.load(f)
+
+test_df.info()
+clean_test_df = test_df[test_df['temperature'].notna()]
+scaler.fit(clean_test_df)
+standardized_test_df = scaler.transform(clean_test_df)
+standardized_test_df['day_of_week'] = standardized_test_df.index.dayofweek.astype('category', copy = False)
+tree_reg.fit(standardized_clean_train_df[["temperature", "day_of_week"]],
+                              standardized_clean_train_df[["load"]])
+tree_reg.predict(clean_test_df)
