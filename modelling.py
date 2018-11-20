@@ -76,10 +76,40 @@ print(np.mean(scores_forest))
 
 # Using the squared temperature really didn't help. Will look for other features
 
+####### Try to re-do the feature engineering with sklearn's OneHotEncoder
 # Feature 1 day of the week
 clean_train_df['day_of_week'] = clean_train_df.index.dayofweek.astype('category', copy = False)
 clean_train_df = pd.get_dummies(clean_train_df)
-clean_train_df = clean_train_df.rename(columns={'dayofweek0': 'Sunday', 'dayofweek1': 'Monday', 'dayofweek2': 'Tuesday', 'dayofweek3': 'Wednesday', 'dayofweek4': 'Thursday', 'dayofweek5': 'Friday', 'dayofweek6': 'Saturday'})
-# Feature 2 time of the day
 
-# Feature 3 season of the year
+clean_train_df = clean_train_df.drop(['day_of_week_0', 'day_of_week_1', 'day_of_week_2', 'day_of_week_3', 'day_of_week_4', 'day_of_week_5', 'day_of_week_6'], axis = 1)
+scores_lin = cross_val_score(lin_reg, clean_train_df[["temperature","day_of_week"]],clean_train_df[["load"]], scoring = "r2", cv = 10)
+print(np.mean(scores_lin))
+
+scores_tree = cross_val_score(tree_reg, clean_train_df[["temperature", "day_of_week"]],clean_train_df[["load"]], scoring = "r2", cv = 10)
+print(np.mean(scores_tree))
+
+scores_forest = cross_val_score(forest_reg, clean_train_df[["temperature", "day_of_week"]],clean_train_df[["load"]], scoring = "r2", cv = 10)
+print(np.mean(scores_forest))
+
+# Feature 2 time of the day
+# It is assumed that gas and electricity consumption follow a similar pattern
+# So, from 0-5 early morning, 6-7 morning ramp, 8-19 working hours, 20-23 nighttime
+clean_train_df['time'] = clean_train_df.index.hour
+conditions = [(clean_train_df['time'] >= 0) & (clean_train_df['time'] <= 5),(clean_train_df['time'] >= 6) & (clean_train_df['time'] <= 7),(clean_train_df['time'] >= 8) & (clean_train_df['time'] <= 19),(clean_train_df['time'] >= 20) & (clean_train_df['time'] <= 23)]
+choices = ['early_morning', 'morning_ramp', 'working_hours', 'night_time']
+clean_train_df['time_of_day'] = np.select(conditions, choices)
+clean_train_df = pd.get_dummies(clean_train_df)
+
+clean_train_df = clean_train_df.rename(columns = {'time_of_day_early_morning': 'early_morning', 'time_of_day_morning_ramp': 'morning_ramp', 'time_of_day_working_hours': 'working_hours', 'time_of_day_night_time': 'night_time'})
+scores_lin = cross_val_score(lin_reg, clean_train_df[["temperature","day_of_week", 'early_morning', 'morning_ramp', 'working_hours','night_time']],clean_train_df[["load"]], scoring = "r2", cv = 10)
+print(np.mean(scores_lin))
+
+scores_tree = cross_val_score(tree_reg, clean_train_df[["temperature","day_of_week", 'early_morning', 'morning_ramp', 'working_hours','night_time']],clean_train_df[["load"]], scoring = "r2", cv = 10)
+print(np.mean(scores_tree))
+
+scores_forest = cross_val_score(forest_reg, clean_train_df[["temperature","day_of_week", 'early_morning', 'morning_ramp', 'working_hours','night_time']],clean_train_df[["load"]], scoring = "r2", cv = 10)
+print(np.mean(scores_forest))
+# Feature 3 season of the year 
+#  
+#
+#
