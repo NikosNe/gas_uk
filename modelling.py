@@ -100,16 +100,16 @@ print(np.mean(scores_forest))
 ####### Try to re-do the feature engineering with sklearn's OneHotEncoder
 # Feature 1 day of the week
 clean_train_df['day_of_week'] = clean_train_df.index.dayofweek.astype('category', copy = False)
-clean_train_df = pd.get_dummies(clean_train_df)
+#clean_train_df = pd.get_dummies(clean_train_df)
 
-clean_train_df = clean_train_df.drop(['day_of_week_0', 
+'''clean_train_df = clean_train_df.drop(['day_of_week_0', 
                                       'day_of_week_1', 
                                       'day_of_week_2', 
                                       'day_of_week_3', 
                                       'day_of_week_4', 
                                       'day_of_week_5', 
                                       'day_of_week_6'], 
-                                       axis = 1)
+                                       axis = 1)'''
 scores_lin = cross_val_score(lin_reg, clean_train_df[["temperature","day_of_week"]],
                              clean_train_df[["load"]], 
                              scoring = "r2", cv = 10)
@@ -161,8 +161,42 @@ print(np.mean(scores_forest))
 # 9-11 Autumn
 # 12-2 Winter
 # 3-5 Spring
+# Try https://stackoverflow.com/questions/26886653/pandas-create-new-column-based-on-values-from-other-columns
+conditions = [(clean_train_df.index.month >= 6) & (clean_train_df.index.month <= 8),(clean_train_df.index.month >= 9) & (clean_train_df.index.month <= 11),(clean_train_df.index.month == 12) | (clean_train_df.index.month <= 2),(clean_train_df.index.month >= 3) & (clean_train_df.index.month <= 5)]
 
-conditions = [(clean_train_df.index.month >= 6) & (clean_train_df.index.month <= 8),(clean_train_df.index.month >= 9) & (clean_train_df.index.month <= 11),(clean_train_df.index.month >= 12) & (clean_train_df.index.month <= 2),(clean_train_df.index.month >= 3) & (clean_train_df.index.month <= 5)]
 choices = ['summer', 'autumn', 'winter', 'spring']
 clean_train_df['season'] = np.select(conditions, choices)
 clean_train_df = pd.get_dummies(clean_train_df)
+clean_train_df = clean_train_df.rename(columns = {'season_autumn': 'autumn', 
+                                                  'season_winter': 'winter', 
+                                                  'season_spring': 'spring', 
+                                                  'season_summer': 'summer'})
+scores_lin = cross_val_score(lin_reg, clean_train_df[['temperature','day_of_week', 
+                                                      'autumn', 'winter',
+                                                      'spring','summer']],
+                                      clean_train_df[["load"]], scoring = "r2", cv = 10)
+print(np.mean(scores_lin))
+
+scores_tree = cross_val_score(tree_reg, clean_train_df[['temperature','day_of_week', 
+                                                      'autumn', 'winter',
+                                                      'spring','summer']],
+                              clean_train_df[["load"]], 
+                              scoring = "r2", cv = 10)
+print(np.mean(scores_tree))
+
+scores_forest = cross_val_score(forest_reg, clean_train_df[['temperature','day_of_week', 
+                                                      'autumn', 'winter',
+                                                      'spring','summer']],
+                                            clean_train_df[["load"]], scoring = "r2", cv = 10)
+print(np.mean(scores_forest))
+
+
+with open("./test.pkl", 'rb') as f:
+    test_df = pickle.load(f)
+
+test_df.info()
+clean_test_df = test_df[test_df['temperature'].notna()]
+clean_test_df['day_of_week'] = clean_test_df.index.dayofweek.astype('category', copy = False)
+tree_reg.fit(standardized_clean_train_df[["temperature", "day_of_week"]],
+                              standardized_clean_train_df[["load"]])
+tree_reg.predict(clean_test_df)
