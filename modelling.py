@@ -100,7 +100,7 @@ print(np.mean(scores_forest))
 ####### Try to re-do the feature engineering with sklearn's OneHotEncoder
 # Feature 1 day of the week
 clean_train_df['day_of_week'] = clean_train_df.index.dayofweek.astype('category', copy = False)
-#clean_train_df = pd.get_dummies(clean_train_df)
+clean_train_df = pd.get_dummies(clean_train_df)
 
 '''clean_train_df = clean_train_df.drop(['day_of_week_0', 
                                       'day_of_week_1', 
@@ -110,17 +110,35 @@ clean_train_df['day_of_week'] = clean_train_df.index.dayofweek.astype('category'
                                       'day_of_week_5', 
                                       'day_of_week_6'], 
                                        axis = 1)'''
-scores_lin = cross_val_score(lin_reg, clean_train_df[["temperature","day_of_week"]],
+scores_lin = cross_val_score(lin_reg, clean_train_df[["temperature",'day_of_week_0', 
+                                      'day_of_week_1', 
+                                      'day_of_week_2', 
+                                      'day_of_week_3', 
+                                      'day_of_week_4', 
+                                      'day_of_week_5', 
+                                      'day_of_week_6']],
                              clean_train_df[["load"]], 
                              scoring = "r2", cv = 10)
 print(np.mean(scores_lin))
 
-scores_tree = cross_val_score(tree_reg, clean_train_df[["temperature", "day_of_week"]],
+scores_tree = cross_val_score(tree_reg, clean_train_df[["temperature", 'day_of_week_0', 
+                                      'day_of_week_1', 
+                                      'day_of_week_2', 
+                                      'day_of_week_3', 
+                                      'day_of_week_4', 
+                                      'day_of_week_5', 
+                                      'day_of_week_6']],
                               clean_train_df[["load"]], 
                               scoring = "r2", cv = 10)
 print(np.mean(scores_tree))
 
-scores_forest = cross_val_score(forest_reg, clean_train_df[["temperature", "day_of_week"]],
+scores_forest = cross_val_score(forest_reg, clean_train_df[["temperature", 'day_of_week_0', 
+                                      'day_of_week_1', 
+                                      'day_of_week_2', 
+                                      'day_of_week_3', 
+                                      'day_of_week_4', 
+                                      'day_of_week_5', 
+                                      'day_of_week_6']],
                                 clean_train_df[["load"]], 
                                 scoring = "r2", cv = 10)
 print(np.mean(scores_forest))
@@ -197,6 +215,6 @@ with open("./test.pkl", 'rb') as f:
 test_df.info()
 clean_test_df = test_df[test_df['temperature'].notna()]
 clean_test_df['day_of_week'] = clean_test_df.index.dayofweek.astype('category', copy = False)
-tree_reg.fit(standardized_clean_train_df[["temperature", "day_of_week"]],
-                              standardized_clean_train_df[["load"]])
+tree_reg.fit(clean_train_df[["temperature", "day_of_week"]],
+                              clean_train_df[["load"]])
 tree_reg.predict(clean_test_df)
