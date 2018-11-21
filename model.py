@@ -25,9 +25,9 @@ class Model:
         self.add_extra_feat = add_extra_feat
     
     def open_file(self):
-        with open(train_data_path, 'rb') as f:
+        with open(self.train_data_path, 'rb') as f:
             self.train_df = pickle.load(f)
-        with open(test_data_path, 'rb') as f:
+        with open(self.test_data_path, 'rb') as f:
             self.test_df = pickle.load(f)
         return self.train_df, self.test_df
     
@@ -144,24 +144,32 @@ class Model:
         return self.clean_train_df
         
     def fit(self):
+        # Normally, I scale the data before doing the fit,
+        # but in this dataset, after trying both with scaled and unscaled data, the performace 
+        # does not improve
         self.clean_train_df = self.add_features()
         lin_reg = LinearRegression()
-        lin_reg.fit(self.clean_train_df[["temperature"]], 
+        lin_reg.fit(self.clean_train_df.drop("load", axis=1), 
             self.clean_train_df[["load"]])
         tree_reg = DecisionTreeRegressor()
-        tree_reg.fit(self.clean_train_df[["temperature"]], 
+        tree_reg.fit(self.clean_train_df.drop("load", axis=1), 
             self.clean_train_df[["load"]])
+        param_grid = [{'n_estimators': [10,40,50], 'max_features':list(range(len(self.clean_train_df)))}]
+        #param_grid = [{'n_estimators': [40], 'max_features':[13]}]
         forest_reg = RandomForestRegressor()
-        forest_reg.fit(self.clean_train_df[["temperature"]], 
+        grid_search = GridSearchCV(forest_reg, param_grid, cv = 5, scoring = 'r2')
+        grid_search.fit(self.clean_train_df.drop("load", axis=1), self.clean_train_df[["load"]])
+        grid_search.best_params_
+        grid_search.cv_results_
+        feature_importances = grid_search.best_estimator_.feature_importances_
+        sorted(zip(feature_importances, list(test.drop("load", axis=1).columns)),reverse = True)
+        forest_reg = RandomForestRegressor(40)
+        forest_reg.fit(self.clean_train_df.drop("load", axis=1), 
             self.clean_train_df[["load"]])
         
-       
     def predict(self):
         pass
     def score(self):
-        pass
-    def report(self):
-        # Compare the three methods and print a small message on which one performs better
         pass
 
 '''def main():

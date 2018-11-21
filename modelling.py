@@ -25,8 +25,8 @@ standardized_clean_train_df = scaler.transform(clean_train_df)
 standardized_clean_train_df = pd.DataFrame(standardized_clean_train_df, 
                                            columns = clean_train_df.columns)
 lin_reg = LinearRegression()
-lin_reg.fit(standardized_clean_train_df[["temperature"]], 
-            standardized_clean_train_df[["load"]])
+lin_reg.fit(self.clean_train_df.drop("load", axis=1), 
+            self.clean_train_df[["load"]])
 
 scores_lin = cross_val_score(lin_reg, 
                              standardized_clean_train_df[["temperature"]],
@@ -53,14 +53,18 @@ scores_forest = cross_val_score(forest_reg,
 
 print(np.mean(scores_forest))
 
-param_grid = [{'n_estimators': [40, 60, 80]}]
+param_grid = [{'n_estimators': [40], 'max_features':[13]}]
 grid_search = GridSearchCV(forest_reg, param_grid, cv = 5, scoring = 'r2')
-grid_search.fit(standardized_clean_train_df[["temperature"]],
-                standardized_clean_train_df[["load"]])
+grid_search.fit(test.drop("load", axis=1), test[["load"]])
 grid_search.best_params_
 grid_search.cv_results_
+feature_importances = grid_search.best_estimator_.feature_importances_
+sorted(zip(feature_importances, list(test.drop("load", axis=1).columns)),reverse = True)
+forest_reg = RandomForestRegressor(n_estimators= 40)
+scores_forest = cross_val_score(forest_reg, test[['temperature','Sunday', 'Monday', 'Tuesday', 'Wednesday','Thursday', 'Friday', 'Saturday', 'summer']],test[["load"]], scoring = "r2", cv = 10)
 
-forest_reg = RandomForestRegressor(n_estimators = 40)
+print(np.mean(scores_forest))
+
 
 scores_forest = cross_val_score(forest_reg, standardized_clean_train_df[["temperature"]],standardized_clean_train_df[["load"]], scoring = "r2", cv = 10)
 
