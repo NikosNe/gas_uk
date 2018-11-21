@@ -124,14 +124,15 @@ class Model:
         choices = ['summer', 'autumn', 'winter', 'spring']
         self.clean_train_df['season'] = np.select(conditions, choices)
         self.clean_train_df = pd.get_dummies(self.clean_train_df)
+        # Day names start with small letters for consistency
         self.clean_train_df = self.clean_train_df.rename(columns = 
-                                                        {'day_of_week_0': 'Sunday', 
-                                                         'day_of_week_1': 'Monday', 
-                                                         'day_of_week_2': 'Tuesday',
-                                                         'day_of_week_3': 'Wednesday',
-                                                         'day_of_week_4': 'Thursday',
-                                                         'day_of_week_5': 'Friday',
-                                                         'day_of_week_6': 'Saturday',
+                                                        {'day_of_week_0': 'sunday', 
+                                                         'day_of_week_1': 'monday', 
+                                                         'day_of_week_2': 'tuesday',
+                                                         'day_of_week_3': 'wednesday',
+                                                         'day_of_week_4': 'thursday',
+                                                         'day_of_week_5': 'friday',
+                                                         'day_of_week_6': 'saturday',
                                                          'time_of_day_early_morning': 'early_morning', 
                                                          'time_of_day_morning_ramp': 'morning_ramp', 
                                                          'time_of_day_working_hours': 'working_hours', 
@@ -148,28 +149,48 @@ class Model:
         # but in this dataset, after trying both with scaled and unscaled data, the performace 
         # does not improve
         self.clean_train_df = self.add_features()
-        lin_reg = LinearRegression()
-        lin_reg.fit(self.clean_train_df.drop("load", axis=1), 
+        self.clean_features_df = self.clean_train_df.drop("load", axis=1)
+        self.lin_reg = LinearRegression()
+        self.lin_reg.fit(self.clean_features_df, 
             self.clean_train_df[["load"]])
-        tree_reg = DecisionTreeRegressor()
-        tree_reg.fit(self.clean_train_df.drop("load", axis=1), 
+        self.tree_reg = DecisionTreeRegressor()
+        self.tree_reg.fit(self.clean_features_df, 
             self.clean_train_df[["load"]])
-        param_grid = [{'n_estimators': [10,40,50], 'max_features':list(range(len(self.clean_train_df)))}]
+        param_grid = [{'n_estimators': [10, 40, 50, 60, 70], 
+                       'max_features':[13, 14, 15, 16]}]
         #param_grid = [{'n_estimators': [40], 'max_features':[13]}]
-        forest_reg = RandomForestRegressor()
-        grid_search = GridSearchCV(forest_reg, param_grid, cv = 5, scoring = 'r2')
-        grid_search.fit(self.clean_train_df.drop("load", axis=1), self.clean_train_df[["load"]])
-        grid_search.best_params_
-        grid_search.cv_results_
+        self.forest_reg = RandomForestRegressor()
+        grid_search = GridSearchCV(self.forest_reg, param_grid, cv = 5, scoring = 'r2')
+        grid_search.fit(self.clean_features_df, self.clean_train_df[["load"]])
+        print(grid_search.best_params_)
+        print(grid_search.cv_results_)
         feature_importances = grid_search.best_estimator_.feature_importances_
-        sorted(zip(feature_importances, list(test.drop("load", axis=1).columns)),reverse = True)
-        forest_reg = RandomForestRegressor(40)
-        forest_reg.fit(self.clean_train_df.drop("load", axis=1), 
-            self.clean_train_df[["load"]])
         
-    def predict(self):
-        pass
+        print(sorted(zip(feature_importances, list(self.clean_train_df.drop("load", axis=1).columns)),
+               reverse = True))
+        self.forest_reg = RandomForestRegressor(70)
+        # According to the best_params and cv_results, 14 features and 70 estimators
+        # can be picked. However, due to the nature of the categorical variables,
+        # some further feature engineering should be implemented, so as to e.g.
+        # split the times of the day more meaningfully and therefore all features will be used as a 
+        # first attempt
+        self.forest_reg.fit(self.clean_features_df, 
+                       self.clean_train_df[["load"]])
+        
+        return self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg
+        
     def score(self):
+        self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg = self.fit()
+        self.clean_train_df = self.add_features()
+        methods = [self.lin_reg, self.tree_reg, self.forest_reg]
+        for method in methods:
+            scores = cross_val_score(method, 
+                                 self.clean_features_df,
+                                 self.clean_train_df[["load"]], 
+                                 scoring = "r2", cv = 10)
+            print(scores)
+            print(np.mean(scores))
+    def predict(self):
         pass
 
 '''def main():
