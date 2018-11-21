@@ -15,6 +15,7 @@ from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 
+# Make it possible to choose whether we want linear regression, forests, etc. from the main call
 class Model:
     
     def __init__(self, train_data_path, test_data_path, add_extra_feat, which_feat):
@@ -62,12 +63,16 @@ class Model:
     def score(self):
         pass
     def report(self):
+        # Compare the three methods and print a small message on which one performs better
         pass
 
 def main():
-    add_extra_feat = input('Do you want to add extra features? ')
+    add_extra_feat = 'start'
+    while (add_extra_feat != 'Yes' and add_extra_feat != 'No'):
+        add_extra_feat = input('Do you want to add extra features? (Yes or No) ')
     if add_extra_feat == 'Yes':
         add_extra_feat = True
-    model = Model("./train.pkl", "./test.pkl", add_extra_feat, 'day_of_week')
+        which_feat = [input('Which features do you want to add? ')]
+    model = Model("./train.pkl", "./test.pkl", add_extra_feat, which_feat)
     model.clean_data()
     model.fit()
