@@ -4,7 +4,7 @@
 
 from setuptools import setup, find_packages
 
-setup(name='shared',
+setup(name='gas_uk',
       version='0.0.1',
       description='This package includes the modelling approach for gas consumption in the UK.',
       author='Nikos Nezeritis',
