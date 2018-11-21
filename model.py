@@ -91,7 +91,7 @@ class Model:
         self.clean_test_df = self.test_df[self.test_df["temperature"].notna()]
         return self.clean_train_df, self.clean_test_df
     
-    def add_features(self):
+    '''def add_features(self):
         self.clean_train_df, self.clean_test_df = self.clean_data()
         # Feature 1 day of the week.
         
@@ -142,14 +142,68 @@ class Model:
                                                          'season_spring': 'spring', 
                                                          'season_summer': 'summer'})
         
-        return self.clean_train_df
+        return self.clean_train_df'''
         
+    def add_features(self, df):
+        
+        # Feature 1 day of the week.
+        
+        # This feature is chosen, because consumers would be expected to behave 
+        # differently in the weekends from the weekdays
+        df['day_of_week'] = \
+        df.index.dayofweek.astype('category', copy = False)
+        
+        # Feature 2 time of the day
+        
+        # It is assumed that gas consumption follows a pattern, in which
+        # from 00:00 to 05:00 the load is small, because people tend to be inactive,
+        # from 06:00 to 07:00 there is a morning ramp, from 08:00 to 19:00 working hours,
+        # αnd from 20-23 nighttime
+        
+        hourly_index = df.index.hour
+        conditions = [(hourly_index >= 0) & (hourly_index <= 5), 
+                      (hourly_index >= 6) & (hourly_index <= 7),
+                      (hourly_index >= 8) & (hourly_index <= 19),
+                      (hourly_index >= 20) & (hourly_index <= 23)]
+        choices = ['early_morning', 'morning_ramp', 'working_hours', 'night_time']
+        df['time_of_day'] = np.select(conditions, choices)
+        # Feature 3 season of the year: Since the temperature tends to be affected by the seasons,
+        # adding the season as a categorical variable could improve the model performance
+        monthly_index = df.index.month
+        conditions = [(monthly_index >= 6) & (monthly_index <= 8),
+                      (monthly_index >= 9) & (monthly_index<= 11),
+                      (monthly_index == 12) | (monthly_index <= 2),
+                      (monthly_index >= 3) & (monthly_index <= 5)]
+        choices = ['summer', 'autumn', 'winter', 'spring']
+        df['season'] = np.select(conditions, choices)
+        df = pd.get_dummies(df)
+        # Day names start with small letters for consistency
+        df = df.rename(columns = {'day_of_week_0': 'sunday', 
+                                            'day_of_week_1': 'monday', 
+                                            'day_of_week_2': 'tuesday',
+                                            'day_of_week_3': 'wednesday',
+                                            'day_of_week_4': 'thursday',
+                                            'day_of_week_5': 'friday',
+                                            'day_of_week_6': 'saturday',
+                                            'time_of_day_early_morning': 'early_morning', 
+                                            'time_of_day_morning_ramp': 'morning_ramp', 
+                                            'time_of_day_working_hours': 'working_hours', 
+                                            'time_of_day_night_time': 'night_time',
+                                            'season_autumn': 'autumn', 
+                                            'season_winter': 'winter', 
+                                            'season_spring': 'spring', 
+                                            'season_summer': 'summer'})
+                                                        
+        
+        return df
+    
     def fit(self):
         # Normally, I scale the data before doing the fit,
         # but in this dataset, after trying both with scaled and unscaled data, the performace 
         # does not improve
-        self.clean_train_df = self.add_features()
-        self.clean_features_df = self.clean_train_df.drop("load", axis=1)
+        self.clean_train_df, self.clean_test_df = self.clean_data()
+        self.clean_train_extra_feat_df = self.add_features(self.clean_train_df)
+        self.clean_features_df = self.clean_train_extra_feat_df.drop("load", axis=1)
         self.lin_reg = LinearRegression()
         self.lin_reg.fit(self.clean_features_df, 
             self.clean_train_df[["load"]])
@@ -177,11 +231,10 @@ class Model:
         self.forest_reg.fit(self.clean_features_df, 
                        self.clean_train_df[["load"]])
         
-        return self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg
+        return self.clean_train_df, self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg
         
     def score(self):
-        self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg = self.fit()
-        self.clean_train_df = self.add_features()
+        self.clean_train_df, self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg = self.fit()
         methods = [self.lin_reg, self.tree_reg, self.forest_reg]
         for method in methods:
             scores = cross_val_score(method, 
