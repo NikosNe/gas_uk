@@ -18,20 +18,17 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 
 class Model:
-    def __init__(self, train_data_path, test_data_path, add_extra_feat):
+    def __init__(self, train_data_path, test_data_path):
         self.train_data_path = train_data_path
         self.test_data_path = test_data_path
-        self.add_extra_feat = add_extra_feat
-
-    def open_file(self):
-        with open(self.train_data_path, 'rb') as f:
-            self.train_df = pickle.load(f)
-        with open(self.test_data_path, 'rb') as f:
-            self.test_df = pickle.load(f)
-        return self.train_df, self.test_df
-
+    
+    def open_file(self, path):
+        with open(path, 'rb') as f:
+            self.df = pickle.load(f)
+        return self.df
+    
     def visualise_data(self):
-        self.train_df, self.test_df = self.open_file()
+        self.train_df = self.open_file(self.train_data_path)
         self.train_df.info()
         self.train_df.describe()
 
@@ -47,7 +44,7 @@ class Model:
         print(corr_matrix)
 
     def check_for_outliers(self):
-        self.train_df, self.test_df = self.open_file()
+        self.train_df = self.open_file(self.train_data_path)
         # calculate summary statistics
         data_mean, data_std = (np.mean(self.train_df["temperature"]),
                                np.std(self.train_df["temperature"]))
@@ -82,8 +79,8 @@ class Model:
         # This method yields no outliers. As a first approach, we are keeping
         # all values
 
-    def clean_data(self):
-        self.train_df, self.test_df = self.open_file()
+    def clean_data(self, path):
+        df = self.open_file(path)
         # As it is concluded by calling the above method, no outliers will be
         # discarded as a first approach.
         # From the output of the info method, we can see that there are
@@ -92,10 +89,10 @@ class Model:
         # the seasonality of the time-series, (but as a first approach and due
         # to the fact that there are not enough data (spanning through more
         # years for example), it is chosen to omit the NaN's)
-        self.clean_train_df = self.train_df[self.train_df["temperature"]\
-                                            .notna()]
-        self.clean_test_df = self.test_df[self.test_df["temperature"].notna()]
-        return self.clean_train_df, self.clean_test_df
+        df = df[df["temperature"]\
+                   .notna()]
+        df = df[df["temperature"].notna()]
+        return df
 
     def add_features(self, df):
 
@@ -153,10 +150,13 @@ class Model:
         # Normally, I scale the data before doing the fit,
         # but in this dataset, after trying both with scaled and unscaled data,
         # the performace does not change
-        self.clean_train_df, self.clean_test_df = self.clean_data()
+        self.clean_train_df = self.clean_data(self.train_data_path)
+        self.clean_test_df = self.clean_data(self.test_data_path)
         self.clean_train_extra_feat_df = self.add_features(self.clean_train_df)
         self.clean_features_df = \
         self.clean_train_extra_feat_df.drop("load", axis=1)
+        # 
+        
         self.lin_reg = LinearRegression()
         self.lin_reg.fit(self.clean_features_df,
                          self.clean_train_df[["load"]])
@@ -165,7 +165,6 @@ class Model:
                           self.clean_train_df[["load"]])
         param_grid = [{'n_estimators': [10, 40, 50, 60, 70],
                        'max_features':[13, 14, 15, 16]}]
-        # param_grid = [{'n_estimators': [40], 'max_features':[13]}]
         self.forest_reg = RandomForestRegressor()
         grid_search = GridSearchCV(self.forest_reg, param_grid, cv=5,
                                    scoring='r2')
@@ -188,7 +187,6 @@ class Model:
                 self.tree_reg, self.forest_reg)
 
     def score(self):
-        self.clean_train_df, self.clean_test_df = self.clean_data()
         self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg = self.fit()
         methods = [self.lin_reg, self.tree_reg, self.forest_reg]
         for method in methods:
@@ -200,7 +198,8 @@ class Model:
             print(np.mean(scores))
 
     def predict(self):
-        self.clean_train_df, self.clean_test_df = self.clean_data()
+        #self.clean_train_df = self.clean_data("./train.pkl")
+        self.clean_test_df = self.clean_data(self.test_data_path)
         self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg = self.fit()
         self.clean_test_extra_feat_df = self.add_features(self.clean_test_df)
         return (self.lin_reg.predict(self.clean_test_extra_feat_df),
