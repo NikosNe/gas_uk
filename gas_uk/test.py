@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Nov 22 19:44:16 2018
-
-@author: Sinnik
-"""
 
 # Import the model
 from gas_uk import model
@@ -15,7 +10,7 @@ from gas_uk import model
 test = model.Model("./train.pkl", "./test.pkl", './random_forest.sav')
 # Make data visualisations
 test.visualise_data()
-# Fit three models. Here, 
+# Fit three models 
 test.fit()
 # Check the cross validation score. If you want to check the performance 
 # on another dataset, then instead of 'cv', write 'score' and instead of
