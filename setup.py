@@ -9,5 +9,5 @@ setup(name='gas_uk',
       description='This package includes the modelling approach for gas consumption in the UK.',
       author='Nikos Nezeritis',
       author_email='nikolaosnezeritis@gmail.com',
-      scripts=['model'] 
+      scripts=['model.py'] 
     )
