@@ -14,7 +14,7 @@ class Model:
     def __init__(self, train_data_path, test_data_path):
         self.train_data_path = train_data_path
         self.test_data_path = test_data_path
-    
+        
     def open_file(self, path):
         with open(path, 'rb') as f:
             self.df = pickle.load(f)
@@ -223,11 +223,14 @@ class Model:
         return (self.clean_features_df, self.lin_reg,
                 self.tree_reg, self.random_forest_model)
 
-    def score(self):
+    def score(self, cv_or_score, score_test_path):
         (self.clean_features_df, self.lin_reg, self.tree_reg, 
         self.random_forest_model) = self.fit()
         methods = [self.lin_reg, self.tree_reg, self.random_forest_model]
-        self.y = np.array(self.clean_train_df[["load"]]).ravel()
+        if cv_or_score == 'cv':
+            self.y = np.array(self.clean_train_df[["load"]]).ravel()
+        elif cv_or_score == 'score':
+            self.y = np.array(self.open_file(score_test_path)).ravel()
         for method in methods:
             scores = cross_val_score(method,
                                      self.clean_features_df,
@@ -235,6 +238,7 @@ class Model:
                                      scoring="r2", cv=10)
             print(scores)
             print(np.mean(scores))
+            
 
     def predict(self):
         self.clean_test_df = self.clean_data(self.test_data_path)
@@ -244,14 +248,7 @@ class Model:
         return (self.lin_reg.predict(self.clean_test_extra_feat_df),
         self.tree_reg.predict(self.clean_test_extra_feat_df),
         self.random_forest_model.predict(self.clean_test_extra_feat_df))
-
-'''def main():
-    add_extra_feat = 'start'
-    while (add_extra_feat != 'Yes' and add_extra_feat != 'No'):
-        add_extra_feat = input('Do you want to add extra features? (Yes or No) ')
-    if add_extra_feat == 'Yes':
-        add_extra_feat = True
-        which_feat = [input('Which features do you want to add? ')]
-    model = Model("./train.pkl", "./test.pkl", add_extra_feat, which_feat)
-    model.clean_data()
-    model.fit()'''
+    
+        
+        
+    

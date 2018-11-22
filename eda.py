@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 %matplotlib qt
 
+
+with open("/Users/sinnik/Downloads/gas_uk/gas_uk/test.pkl", 'rb') as f:
+    test_df = pickle.load(f)
+    
 with open("./clean_train.pkl", 'rb') as f:
     train_df = pickle.load(f)
 
