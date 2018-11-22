@@ -5,9 +5,9 @@
 from setuptools import setup
 
 setup(name='gas_uk',
-      version='0.0.1',
+      version='0.0.2',
       description='This package includes the modelling approach for gas consumption in the UK.',
       author='Nikos Nezeritis',
       author_email='nikolaosnezeritis@gmail.com',
-      scripts=['model.py'] 
+      scripts=['model'] 
     )
