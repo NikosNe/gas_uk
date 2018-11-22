@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 20 20:16:37 2018
-
-@author: Sinnik
-"""
 
 import pickle
 import pandas as pd
@@ -80,7 +73,9 @@ class Model:
         # all values
 
     def clean_data(self, path):
+        
         df = self.open_file(path)
+        
         # As it is concluded by calling the above method, no outliers will be
         # discarded as a first approach.
         # From the output of the info method, we can see that there are
@@ -89,6 +84,7 @@ class Model:
         # the seasonality of the time-series, (but as a first approach and due
         # to the fact that there are not enough data (spanning through more
         # years for example), it is chosen to omit the NaN's)
+        
         df = df[df["temperature"]\
                    .notna()]
         df = df[df["temperature"].notna()]
@@ -117,9 +113,14 @@ class Model:
         choices = ['early_morning', 'morning_ramp',
                    'working_hours', 'night_time']
         df['time_of_day'] = np.select(conditions, choices)
-        # Feature 3 season of the year: Since the temperature tends to be
-        # affected by the seasons, adding the season as a categorical variable
+        
+        # Feature 3 season of the year
+        
+        # The gas consumption could be affected
+        # by the seasons, due to holidays, etc.
+        # Hence, adding the season as a categorical variable
         # could improve the model performance
+        
         monthly_index = df.index.month
         conditions = [(monthly_index >= 6) & (monthly_index <= 8),
                       (monthly_index >= 9) & (monthly_index <= 11),
@@ -128,7 +129,9 @@ class Model:
         choices = ['summer', 'autumn', 'winter', 'spring']
         df['season'] = np.select(conditions, choices)
         df = pd.get_dummies(df)
-        # Day names start with small letters for consistency
+        
+        # Renaming the dummy variables to get meaningful names
+        # (Day names start with small letters for consistency)
         df = df.rename(columns={'day_of_week_0': 'sunday',
                                 'day_of_week_1': 'monday',
                                 'day_of_week_2': 'tuesday',
@@ -151,23 +154,45 @@ class Model:
         # but in this dataset, after trying both with scaled and unscaled data,
         # the performace does not change
         self.clean_train_df = self.clean_data(self.train_data_path)
-        self.clean_test_df = self.clean_data(self.test_data_path)
+        # self.clean_test_df = self.clean_data(self.test_data_path)
         self.clean_train_extra_feat_df = self.add_features(self.clean_train_df)
         self.clean_features_df = \
         self.clean_train_extra_feat_df.drop("load", axis=1)
-        # Three methods are used to solve this regression problem
         self.y = np.array(self.clean_train_df[["load"]]).ravel()
+        # Three methods are used to solve this regression problem
         # 1. Linear Regression
+        
         self.lin_reg = LinearRegression()
         self.lin_reg.fit(self.clean_features_df, self.y)
         
         # 2. Decision Trees Regression
+        
         self.tree_reg = DecisionTreeRegressor()
         self.tree_reg.fit(self.clean_features_df, self.y)
         
+        '''param_grid = [{'max_features':[13, 14, 15, 16]}]
+        grid_search = GridSearchCV(self.tree_reg, param_grid, cv=5,
+                                   scoring='r2')
+        grid_search.fit(self.clean_features_df, self.y)
+        print(grid_search.best_params_)
+        print(grid_search.cv_results_)
+        feature_importances = grid_search.best_estimator_.feature_importances_
+        print(sorted(zip(feature_importances,
+                     list(self.clean_features_df.columns)),
+              reverse=True))'''
+        
+        # According to the best_params and cv_results, 13 features 
+        # should be picked. And actually, the variables 'winter', 
+        # "morning_ramp" and "summer" have the lowest importances. 
+        # It can also be observed that temperature is far more significant
+        # than all the other features, followed by the days of the week.
+        # This is an indication that the times of the day should be
+        # modelled differently
+        
         # 3. Random Forest Regression
-        # Hyperparameter tuning. This section is commented out because 
+        # Hyperparameter tuning. This section is commented out because running 
         # it takes time. This model has been pickled
+        
         '''param_grid = [{'n_estimators': [10, 40, 50, 60, 70],
                        'max_features':[13, 14, 15, 16]}]
         self.forest_reg = RandomForestRegressor()
@@ -178,7 +203,7 @@ class Model:
         print(grid_search.cv_results_)
         feature_importances = grid_search.best_estimator_.feature_importances_
         print(sorted(zip(feature_importances,
-                     list(self.clean_train_df.drop("load", axis=1).columns)),
+                     list(self.clean_features_df.columns)),
               reverse=True))
         self.forest_reg = RandomForestRegressor(70)'''
         
@@ -193,13 +218,15 @@ class Model:
         # categorical variables, some further feature engineering should be
         # implemented, so as to e.g. split the times of the day differently
         # and therefore all features will be used as a first attempt
+        
         self.random_forest_model.fit(self.clean_features_df, self.y)
         return (self.clean_features_df, self.lin_reg,
                 self.tree_reg, self.random_forest_model)
 
     def score(self):
-        self.clean_features_df, self.lin_reg, self.tree_reg, self.random_forest_model = self.fit()
-        methods = [self.lin_reg, self.tree_reg, self.forest_reg]
+        (self.clean_features_df, self.lin_reg, self.tree_reg, 
+        self.random_forest_model) = self.fit()
+        methods = [self.lin_reg, self.tree_reg, self.random_forest_model]
         self.y = np.array(self.clean_train_df[["load"]]).ravel()
         for method in methods:
             scores = cross_val_score(method,
@@ -211,11 +238,12 @@ class Model:
 
     def predict(self):
         self.clean_test_df = self.clean_data(self.test_data_path)
-        self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg = self.fit()
+        (self.clean_features_df, self.lin_reg,
+         self.tree_reg, self.random_forest_model) = self.fit()
         self.clean_test_extra_feat_df = self.add_features(self.clean_test_df)
         return (self.lin_reg.predict(self.clean_test_extra_feat_df),
         self.tree_reg.predict(self.clean_test_extra_feat_df),
-        self.forest_reg.predict(self.clean_test_extra_feat_df))
+        self.random_forest_model.predict(self.clean_test_extra_feat_df))
 
 '''def main():
     add_extra_feat = 'start'
