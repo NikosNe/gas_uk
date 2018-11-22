@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Nov 22 19:44:16 2018
+
+@author: Sinnik
+"""
+
+# Import the model
+from gas_uk import model
+# Create an instance of the class model. As arguments, there should be given:
+# The train pickle file, the test pickle file and the .sav file, all of which 
+# are in the package folder. The following paths are not guaranteed to work 
+# on every PC, since this depends on how the package is installed
+test = model.Model("./train.pkl", "./test.pkl", './random_forest.sav')
+# Make data visualisations
+test.visualise_data()
+# Fit three models. Here, 
+test.fit()
+# Check the cross validation score. If you want to check the performance 
+# on another dataset, then instead of 'cv', write 'score' and instead of
+# 'nothing', the path of the dataframe. Detailed instructions on the dataframe
+# can be found on the comments of the code
+test.score('cv', 'nothing')
+# Make predictions on the given test dataset
+test.predict()

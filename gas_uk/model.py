@@ -11,9 +11,10 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 
 class Model:
-    def __init__(self, train_data_path, test_data_path):
+    def __init__(self, train_data_path, test_data_path, rand_for_filename):
         self.train_data_path = train_data_path
         self.test_data_path = test_data_path
+        self.rand_for_filename = rand_for_filename
         
     def open_file(self, path):
         '''This method receives a file path of a pickle and 
@@ -160,7 +161,7 @@ class Model:
                                 'season_summer': 'summer'})
         return df
 
-    def fit(self, filename):
+    def fit(self):
         '''This method tries several models and returns their fits.
            The random forest regressor fit has been pickled and included in the
            package. To run this method just add its path as the filename argument'''
@@ -226,7 +227,7 @@ class Model:
         
         # filename = 'random_forest.sav'
         # pickle.dump(self.forest_reg, open(filename, 'wb'))
-        self.random_forest_model = pickle.load(open(filename, 'rb'))
+        self.random_forest_model = pickle.load(open(self.rand_for_filename, 'rb'))
         
         # According to the best_params and cv_results, 14 features and
         # 70 estimators can be picked. However, due to the nature of the
@@ -244,8 +245,10 @@ class Model:
            parameter, otherwise give the value 'score'. In case
            the latter is chosen, the score_test_path should be 
            the path of the test dataframe you want to see the r2 scores
-           resulting from the fit. This dataframe should be of the pickle
-           format and should have at least one column named "load"'''
+           resulting from the fit. Otherwise, the score_test_path can
+           be a random string. The dataframe corresponding to the 
+           score_test_path should be of the pickle format and should have 
+           at least one column named "load"'''
         
         (self.clean_features_df, self.lin_reg, self.tree_reg, 
         self.random_forest_model) = self.fit()
