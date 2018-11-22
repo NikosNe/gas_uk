@@ -155,50 +155,61 @@ class Model:
         self.clean_train_extra_feat_df = self.add_features(self.clean_train_df)
         self.clean_features_df = \
         self.clean_train_extra_feat_df.drop("load", axis=1)
-        # 
-        
+        # Three methods are used to solve this regression problem
+        self.y = np.array(self.clean_train_df[["load"]]).ravel()
+        # 1. Linear Regression
         self.lin_reg = LinearRegression()
-        self.lin_reg.fit(self.clean_features_df,
-                         self.clean_train_df[["load"]])
+        self.lin_reg.fit(self.clean_features_df, self.y)
+        
+        # 2. Decision Trees Regression
         self.tree_reg = DecisionTreeRegressor()
-        self.tree_reg.fit(self.clean_features_df,
-                          self.clean_train_df[["load"]])
-        param_grid = [{'n_estimators': [10, 40, 50, 60, 70],
+        self.tree_reg.fit(self.clean_features_df, self.y)
+        
+        # 3. Random Forest Regression
+        # Hyperparameter tuning. This section is commented out because 
+        # it takes time. This model has been pickled
+        '''param_grid = [{'n_estimators': [10, 40, 50, 60, 70],
                        'max_features':[13, 14, 15, 16]}]
         self.forest_reg = RandomForestRegressor()
         grid_search = GridSearchCV(self.forest_reg, param_grid, cv=5,
                                    scoring='r2')
-        grid_search.fit(self.clean_features_df, self.clean_train_df[["load"]])
+        grid_search.fit(self.clean_features_df, self.y)
         print(grid_search.best_params_)
         print(grid_search.cv_results_)
         feature_importances = grid_search.best_estimator_.feature_importances_
         print(sorted(zip(feature_importances,
                      list(self.clean_train_df.drop("load", axis=1).columns)),
               reverse=True))
-        self.forest_reg = RandomForestRegressor(70)
+        self.forest_reg = RandomForestRegressor(70)'''
+        
+        # Save model to disk
+        
+        filename = 'random_forest.sav'
+        # pickle.dump(self.forest_reg, open(filename, 'wb'))
+        self.random_forest_model = pickle.load(open(filename, 'rb'))
+        
         # According to the best_params and cv_results, 14 features and
         # 70 estimators can be picked. However, due to the nature of the
         # categorical variables, some further feature engineering should be
         # implemented, so as to e.g. split the times of the day differently
         # and therefore all features will be used as a first attempt
-        self.forest_reg.fit(self.clean_features_df,
-                            self.clean_train_df[["load"]])
+        self.random_forest_model.fit(self.clean_features_df, self.y)
         return (self.clean_features_df, self.lin_reg,
-                self.tree_reg, self.forest_reg)
+                self.tree_reg, self.random_forest_model)
 
     def score(self):
-        self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg = self.fit()
+        self.clean_features_df, self.lin_reg, self.tree_reg, self.random_forest_model = self.fit()
         methods = [self.lin_reg, self.tree_reg, self.forest_reg]
+        self.y = np.array(self.clean_train_df[["load"]]).ravel()
         for method in methods:
             scores = cross_val_score(method,
                                      self.clean_features_df,
-                                     self.clean_train_df[["load"]],
+                                     self.y,
                                      scoring="r2", cv=10)
             print(scores)
             print(np.mean(scores))
 
     def predict(self):
-        #self.clean_train_df = self.clean_data("./train.pkl")
         self.clean_test_df = self.clean_data(self.test_data_path)
         self.clean_features_df, self.lin_reg, self.tree_reg, self.forest_reg = self.fit()
         self.clean_test_extra_feat_df = self.add_features(self.clean_test_df)
