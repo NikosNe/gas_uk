@@ -16,11 +16,14 @@ class Model:
         self.test_data_path = test_data_path
         
     def open_file(self, path):
+        '''This method receives a file path of a pickle and 
+           returns its output'''
         with open(path, 'rb') as f:
             self.df = pickle.load(f)
         return self.df
     
     def visualise_data(self):
+        '''This method makes the needed visualisations as part of the EDA'''
         self.train_df = self.open_file(self.train_data_path)
         self.train_df.info()
         self.train_df.describe()
@@ -37,6 +40,9 @@ class Model:
         print(corr_matrix)
 
     def check_for_outliers(self):
+        '''This method checks whether there are outliers in the given 
+        variables. As it is, it doesn't return anything, but it is left
+        for reference purposes'''
         self.train_df = self.open_file(self.train_data_path)
         # calculate summary statistics
         data_mean, data_std = (np.mean(self.train_df["temperature"]),
@@ -73,7 +79,9 @@ class Model:
         # all values
 
     def clean_data(self, path):
-        
+        '''This method receives as an argument the path of either the train.pkl
+           or the test.pkl and returns them without NA's'''
+           
         df = self.open_file(path)
         
         # As it is concluded by calling the above method, no outliers will be
@@ -91,7 +99,10 @@ class Model:
         return df
 
     def add_features(self, df):
-
+        '''This method adds extra features in order to 
+           improve the model performance. It receives as an argument
+           a dataframe and returns the same argument with extra columns, one
+           for each extra feature'''
         # Feature 1 day of the week.
 
         # This feature is chosen, because consumers would be expected to behave
@@ -149,7 +160,11 @@ class Model:
                                 'season_summer': 'summer'})
         return df
 
-    def fit(self):
+    def fit(self, filename):
+        '''This method tries several models and returns their fits.
+           The random forest regressor fit has been pickled and included in the
+           package. To run this method just add its path as the filename argument'''
+          
         # Normally, I scale the data before doing the fit,
         # but in this dataset, after trying both with scaled and unscaled data,
         # the performace does not change
@@ -209,7 +224,7 @@ class Model:
         
         # Save model to disk
         
-        filename = 'random_forest.sav'
+        # filename = 'random_forest.sav'
         # pickle.dump(self.forest_reg, open(filename, 'wb'))
         self.random_forest_model = pickle.load(open(filename, 'rb'))
         
@@ -224,6 +239,14 @@ class Model:
                 self.tree_reg, self.random_forest_model)
 
     def score(self, cv_or_score, score_test_path):
+        ''' This method cross validates and calculates scores.
+           To do the former, give the value 'cv' to the cv_or_score
+           parameter, otherwise give the value 'score'. In case
+           the latter is chosen, the score_test_path should be 
+           the path of the test dataframe you want to see the r2 scores
+           resulting from the fit. This dataframe should be of the pickle
+           format and should have at least one column named "load"'''
+        
         (self.clean_features_df, self.lin_reg, self.tree_reg, 
         self.random_forest_model) = self.fit()
         methods = [self.lin_reg, self.tree_reg, self.random_forest_model]
@@ -239,8 +262,9 @@ class Model:
             print(scores)
             print(np.mean(scores))
             
-
     def predict(self):
+        '''This method makes the load predictions for the test file
+            provided as a pickle'''
         self.clean_test_df = self.clean_data(self.test_data_path)
         (self.clean_features_df, self.lin_reg,
          self.tree_reg, self.random_forest_model) = self.fit()
