@@ -23,7 +23,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-          'matplotlib', 'numpy', 'pandas', 'scikit-learn', 'pickle']
+          'matplotlib', 'numpy', 'pandas', 'scikit-learn', 'pickle'],
     include_package_data=True
 )
 
