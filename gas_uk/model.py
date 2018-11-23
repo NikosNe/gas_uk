@@ -43,7 +43,7 @@ class Model:
         plt.xlabel("datetime")
         plt.ylabel("load (kWh)")
         plt.show()
-        corr_matrix = self.train_df.reset_index().corr()
+        corr_matrix = self.train_df.corr()
         print("Correlation Matrix")
         print(corr_matrix)
 
@@ -97,7 +97,7 @@ class Model:
         # From the output of the info method, we can see that there are
         # 1398 NaN values in the load column. It is chosen to remove these
         # values. Another possibility would be to interpolate or exploit
-        # the seasonality of the time-series, but as a first approach and due
+        # the periodicity of the time-series, but as a first approach and due
         # it is chosen to omit the NaN's
         
         df = df[df["temperature"]\
@@ -264,11 +264,13 @@ class Model:
         if cv_or_score == 'cv':
             self.y = np.array(self.clean_train_df[["load"]]).ravel()
         elif cv_or_score == 'score':
-            self.y = np.array(self.open_file(score_test_path)).ravel()
+            self.score_test_df = self.open_file(score_test_path)
+            self.score_X = self.score_test_df.drop(["load"], axis=1) 
+            self.score_y = np.array(self.score_test_df["load"]]).ravel()
         for method in methods:
             scores = cross_val_score(method,
-                                     self.clean_features_df,
-                                     self.y,
+                                     self.score_X,
+                                     self.score_y,
                                      scoring="r2", cv=10)
             print(scores)
             print(np.mean(scores))
