@@ -103,6 +103,11 @@ class Model:
         df = df[df["temperature"]\
                    .notna()]
         df = df[df["temperature"].notna()]
+        
+        # If one wants to make a comparison with imputed values,
+        # They can just comment out the following line of code and
+        # comment the notna part in the lines 103-106
+        # df = df.groupby(df.index.month).fillna('median')
         return df
 
     def add_features(self, df):
@@ -264,9 +269,9 @@ class Model:
         if cv_or_score == 'cv':
             self.y = np.array(self.clean_train_df[["load"]]).ravel()
         elif cv_or_score == 'score':
-            self.score_test_df = self.open_file(score_test_path)
+            self.score_test_df = self.clean_data(score_test_path)
             self.score_X = self.score_test_df.drop(["load"], axis=1) 
-            self.score_y = np.array(self.score_test_df["load"]]).ravel()
+            self.score_y = np.array(self.score_test_df[["load"]]).ravel()
         for method in methods:
             scores = cross_val_score(method,
                                      self.score_X,
