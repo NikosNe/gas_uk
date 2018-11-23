@@ -17,5 +17,7 @@ test.fit()
 # 'nothing', the path of the dataframe. Detailed instructions on the dataframe
 # can be found on the comments of the code
 test.score('cv', 'nothing')
+# If one wants to see the score on a test score, its file path should be added
+test.score('score', "./train.pkl")
 # Make predictions on the given test dataset
 test.predict()

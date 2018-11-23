@@ -268,14 +268,16 @@ class Model:
         methods = [self.lin_reg, self.tree_reg, self.random_forest_model]
         if cv_or_score == 'cv':
             self.y = np.array(self.clean_train_df[["load"]]).ravel()
+            
         elif cv_or_score == 'score':
             self.score_test_df = self.clean_data(score_test_path)
-            self.score_X = self.score_test_df.drop(["load"], axis=1) 
-            self.score_y = np.array(self.score_test_df[["load"]]).ravel()
+            self.clean_features_df = self.add_features(self.score_test_df)
+            self.clean_features_df= self.clean_features_df.drop(["load"], axis=1) 
+            self.y = np.array(self.score_test_df[["load"]]).ravel()
         for method in methods:
             scores = cross_val_score(method,
-                                     self.score_X,
-                                     self.score_y,
+                                     self.clean_features_df,
+                                     self.y,
                                      scoring="r2", cv=10)
             print(scores)
             print(np.mean(scores))
