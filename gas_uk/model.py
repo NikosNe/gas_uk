@@ -43,7 +43,7 @@ class Model:
         plt.xlabel("datetime")
         plt.ylabel("load (kWh)")
         plt.show()
-        corr_matrix = self.train_df.corr()
+        corr_matrix = self.train_df.reset_index().corr()
         print("Correlation Matrix")
         print(corr_matrix)
 
