@@ -33,9 +33,16 @@ class Model:
         plt.show()
 
         plt.scatter(self.train_df['temperature'],
-                    self.train_df['load'], alpha=0.5)
+                    self.train_df['load'], alpha= 0.5)
         plt.xlabel("Temperature (C)")
         plt.ylabel("load (kWh)")
+        plt.show()
+        plt.scatter(self.train_df.index,
+                    self.train_df['load'], alpha = 0.5)
+        
+        plt.xlabel("datetime")
+        plt.ylabel("load (kWh)")
+        plt.show()
         corr_matrix = self.train_df.corr()
         print("Correlation Matrix")
         print(corr_matrix)
@@ -170,8 +177,10 @@ class Model:
         # but in this dataset, after trying both with scaled and unscaled data,
         # the performace does not change
         self.clean_train_df = self.clean_data(self.train_data_path)
-        # self.clean_test_df = self.clean_data(self.test_data_path)
+        
         self.clean_train_extra_feat_df = self.add_features(self.clean_train_df)
+        # Resetting the index to use the datetime as an independent variable
+        self.clean_train_df = self.clean_train_df.reset_index()
         self.clean_features_df = \
         self.clean_train_extra_feat_df.drop("load", axis=1)
         self.y = np.array(self.clean_train_df[["load"]]).ravel()
@@ -210,7 +219,7 @@ class Model:
         # it takes time. This model has been pickled
         
         '''param_grid = [{'n_estimators': [10, 40, 50, 60, 70],
-                       'max_features':[13, 14, 15, 16]}]
+                       'max_features':[13, 14, 15, 17]}]
         self.forest_reg = RandomForestRegressor()
         grid_search = GridSearchCV(self.forest_reg, param_grid, cv=5,
                                    scoring='r2')
@@ -225,7 +234,7 @@ class Model:
         
         # Save model to disk
         
-        # filename = 'random_forest.sav'
+        #filename = 'random_forest.sav'
         # pickle.dump(self.forest_reg, open(filename, 'wb'))
         self.random_forest_model = pickle.load(open(self.rand_for_filename, 'rb'))
         
