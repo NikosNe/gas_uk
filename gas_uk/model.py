@@ -96,13 +96,19 @@ class Model:
         # discarded as a first approach.
         # From the output of the info method, we can see that there are
         # 1398 NaN values in the load column. It is chosen to remove these
-        # values. Another possibility would be to interpolate or exploit
+        # values. Another possibility would be to  exploit
         # the seasonality of the time-series, but as a first approach and due
-        # it is chosen to omit the NaN's
+        # it is chosen to omit the NaN's. The imputing can also be implemented
+        # below
         
         df = df[df["temperature"]\
                    .notna()]
         df = df[df["temperature"].notna()]
+        
+        # If one wants to make a comparison with imputed values,
+        # They can just comment out the following line of code and
+        # comment the notna part in the lines 103-106
+        # df = df.groupby(df.index.month).fillna('median')
         return df
 
     def add_features(self, df):
