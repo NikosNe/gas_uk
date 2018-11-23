@@ -97,7 +97,7 @@ class Model:
         # From the output of the info method, we can see that there are
         # 1398 NaN values in the load column. It is chosen to remove these
         # values. Another possibility would be to  exploit
-        # the seasonality of the time-series, but as a first approach and due
+        # the periodicity of the time-series, but as a first approach and due
         # it is chosen to omit the NaN's. The imputing can also be implemented
         # below
         
