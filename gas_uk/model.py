@@ -176,6 +176,9 @@ class Model:
                                 'season_winter': 'winter',
                                 'season_spring': 'spring',
                                 'season_summer': 'summer'})
+        
+        # Feature 4 hour_numeric
+        df['hour_numeric'] = df.index.hour
     
         return df
 
@@ -205,7 +208,7 @@ class Model:
         self.tree_reg = DecisionTreeRegressor()
         self.tree_reg.fit(self.clean_features_df, self.y)
         
-        '''param_grid = [{'max_features':[13, 14, 15, 16]}]
+        '''param_grid = [{'max_features':[13, 14, 15, 16, 17]}]
         grid_search = GridSearchCV(self.tree_reg, param_grid, cv=5,
                                    scoring='r2')
         grid_search.fit(self.clean_features_df, self.y)
@@ -244,8 +247,8 @@ class Model:
         
         # Save model to disk
         
-        # filename = 'random_forest.sav'
-        # pickle.dump(self.forest_reg, open(filename, 'wb'))
+        '''filename = 'random_forest.sav'
+        pickle.dump(self.forest_reg, open(filename, 'wb'))'''
         self.random_forest_model = pickle.load(open(self.rand_for_filename, 
                                                     'rb'))
         
