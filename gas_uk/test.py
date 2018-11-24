@@ -6,8 +6,12 @@ from gas_uk import model
 # Create an instance of the class model. As arguments, there should be given:
 # The train pickle file, the test pickle file and the .sav file, all of which 
 # are in the package folder. The following paths are not guaranteed to work 
-# on every PC, since this depends on how the package is installed
-test = model.Model("./train.pkl", "./test.pkl", './random_forest.sav')
+# on every PC, since this depends on where the package is installed
+test = model.Model("./train.pkl", "./test.pkl", 
+                   './random_forest.sav', 'remove')
+
+test = model.Model("./train.pkl", "./test.pkl", 
+                   './random_forest.sav', 'impute')
 # Make data visualisations
 test.visualise_data()
 # Fit three models 

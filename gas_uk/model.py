@@ -11,10 +11,12 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 
 class Model:
-    def __init__(self, train_data_path, test_data_path, rand_for_filename):
+    def __init__(self, train_data_path, test_data_path, 
+                 rand_for_filename, impute_or_remove):
         self.train_data_path = train_data_path
         self.test_data_path = test_data_path
         self.rand_for_filename = rand_for_filename
+        self.impute_or_remove = impute_or_remove
         
     def open_file(self, path):
         '''This method receives a file path of a pickle and 
@@ -100,14 +102,16 @@ class Model:
         # the periodicity of the time-series, but as a first approach and due
         # it is chosen to omit the NaN's
         
-        df = df[df["temperature"]\
-                   .notna()]
-        df = df[df["temperature"].notna()]
+        if self.impute_or_remove == 'remove':
+            df = df[df["temperature"]\
+                       .notna()]
+            df = df[df["temperature"].notna()]
         
         # If one wants to make a comparison with imputed values,
         # They can just comment out the following line of code and
         # comment the notna part in the lines 103-106
-        # df = df.groupby(df.index.month).fillna('median')
+        else:
+            df['temperature'] = df['temperature'].groupby(df.index.month).transform(lambda x: x.fillna(x.median()))
         return df
 
     def add_features(self, df):
@@ -170,6 +174,7 @@ class Model:
                                 'season_winter': 'winter',
                                 'season_spring': 'spring',
                                 'season_summer': 'summer'})
+    
         return df
 
     def fit(self):
@@ -183,8 +188,6 @@ class Model:
         self.clean_train_df = self.clean_data(self.train_data_path)
         
         self.clean_train_extra_feat_df = self.add_features(self.clean_train_df)
-        # Resetting the index to use the datetime as an independent variable
-        self.clean_train_df = self.clean_train_df.reset_index()
         self.clean_features_df = \
         self.clean_train_extra_feat_df.drop("load", axis=1)
         self.y = np.array(self.clean_train_df[["load"]]).ravel()
@@ -223,7 +226,7 @@ class Model:
         # it takes time. This model has been pickled
         
         '''param_grid = [{'n_estimators': [10, 40, 50, 60, 70],
-                       'max_features':[13, 14, 15, 17]}]
+                       'max_features':[13, 14, 15, 16, 17]}]
         self.forest_reg = RandomForestRegressor()
         grid_search = GridSearchCV(self.forest_reg, param_grid, cv=5,
                                    scoring='r2')
@@ -238,7 +241,7 @@ class Model:
         
         # Save model to disk
         
-        #filename = 'random_forest.sav'
+        # filename = 'random_forest.sav'
         # pickle.dump(self.forest_reg, open(filename, 'wb'))
         self.random_forest_model = pickle.load(open(self.rand_for_filename, 'rb'))
         
