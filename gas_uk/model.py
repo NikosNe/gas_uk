@@ -111,7 +111,9 @@ class Model:
         # They can just comment out the following line of code and
         # comment the notna part in the lines 103-106
         else:
-            df['temperature'] = df['temperature'].groupby(df.index.month).transform(lambda x: x.fillna(x.median()))
+            df['temperature'] =\
+            df['temperature'].groupby(df.index.month).transform(
+                    lambda x: x.fillna(x.median()))
         return df
 
     def add_features(self, df):
@@ -180,7 +182,8 @@ class Model:
     def fit(self):
         '''This method tries several models and returns their fits.
            The random forest regressor fit has been pickled and included in the
-           package. To run this method just add its path as the filename argument'''
+           package. To run this method just add its path as 
+           the filename argument'''
           
         # Normally, I scale the data before doing the fit,
         # but in this dataset, after trying both with scaled and unscaled data,
@@ -243,7 +246,8 @@ class Model:
         
         # filename = 'random_forest.sav'
         # pickle.dump(self.forest_reg, open(filename, 'wb'))
-        self.random_forest_model = pickle.load(open(self.rand_for_filename, 'rb'))
+        self.random_forest_model = pickle.load(open(self.rand_for_filename, 
+                                                    'rb'))
         
         # According to the best_params and cv_results, 14 features and
         # 70 estimators can be picked. However, due to the nature of the
@@ -275,7 +279,8 @@ class Model:
         elif cv_or_score == 'score':
             self.score_test_df = self.clean_data(score_test_path)
             self.clean_features_df = self.add_features(self.score_test_df)
-            self.clean_features_df= self.clean_features_df.drop(["load"], axis=1) 
+            self.clean_features_df= self.clean_features_df.drop(["load"], 
+                                                                axis=1) 
             self.y = np.array(self.score_test_df[["load"]]).ravel()
         for method in methods:
             scores = cross_val_score(method,

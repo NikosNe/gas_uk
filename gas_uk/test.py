@@ -7,9 +7,10 @@ from gas_uk import model
 # The train pickle file, the test pickle file and the .sav file, all of which 
 # are in the package folder. The following paths are not guaranteed to work 
 # on every PC, since this depends on where the package is installed
+# Run with removing NA's
 test = model.Model("./train.pkl", "./test.pkl", 
                    './random_forest.sav', 'remove')
-
+# Run with imputing
 test = model.Model("./train.pkl", "./test.pkl", 
                    './random_forest.sav', 'impute')
 # Make data visualisations
