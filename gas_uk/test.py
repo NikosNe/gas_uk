@@ -8,11 +8,9 @@ from gas_uk import model
 # are in the package folder. The following paths are not guaranteed to work 
 # on every PC, since this depends on where the package is installed
 # Run with removing NA's
-test = model.Model("./train.pkl", "./test.pkl", 
-                   './random_forest.sav', 'remove')
+test = model.Model("./train.pkl", "./test.pkl", './random_forest.sav', 'remove')
 # Run with imputing
-test = model.Model("./train.pkl", "./test.pkl", 
-                   './random_forest.sav', 'impute')
+test = model.Model("./train.pkl", "./test.pkl", './random_forest.sav', 'impute')
 # Make data visualisations
 test.visualise_data()
 # Fit three models 
